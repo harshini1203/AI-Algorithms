@@ -21,6 +21,12 @@ struct CompareEdges {
         return a.eh>b.eh; // Min-heap 
     }
 };
+struct ComparePairs {
+    bool operator()(const pair<int, Edge>& p1, const pair<int, Edge>& p2) const {
+        // Compare based on the cumulative cost in the pair
+        return p1.first > p2.first; //Min-heap
+    }
+};
 
 class Graph {
 
@@ -40,64 +46,64 @@ public:
         adjacencyList[v1].push_back(Edge(v2, cost,eh)); // Pushing edge with destination vertex and cost to adjacency list of node v1
         adjacencyList[v2].push_back(Edge(v1, cost,eh)); // For undirected graph, add an edge in both directions
     }
-    // vector<int> oracle(int goal){
+    vector<int> oracle(int goal){
         
-    //     priority_queue<Edge, vector<Edge>, CompareEdges> q;
-    //     vector<pair<vector<int>,int>;
-    //     vector<int> parent(N, -1);
-    //     int visit[N]={0};
-    //     visit[0]=1;
+        priority_queue<Edge, vector<Edge>, CompareEdges> q;
+        vector<pair<vector<int>,int>;
+        vector<int> parent(N, -1);
+       
      
-    //     q.push(Edge(0,0,0));
-    //     cout<<q.top().vertex<<endl;
-    //     while(!q.empty()){
-    //         priority_queue<Edge,vector<Edge>,CompareEdges> temp;
-    //         int node=q.top().vertex;
-    //         int cost=q.top().cost;
-    //         q.pop();
+        q.push(Edge(0,0,0));
+        cout<<q.top().vertex<<endl;
+        while(!q.empty()){
+           priority_queue<pair<int, Edge>,vector<pair<int, Edge>>, ComparePairs> temp;
+            int node=q.top().second.vertex;
+            int cost=q.top().second.cost;
+            int cumulativeCost=q.top().first;
+            q.pop();
             
-    //          if (node == goal) {
-    //             vector<int> path;
-    //             while (node != -1) {
-    //                 path.push_back(node);
-    //                 cout<<"pushed in path : "<<node<<endl;
-    //                 node = parent[node];
-    //             }
-    //             reverse(path.begin(),path.end());
-    //             ans.push_back()
-    //         }
-    //         for(Edge& edge:adjacencyList[node]){
+             if (node == goal) {
+                vector<int> path;
+                while (node != -1) {
+                    path.push_back(node);
+                    cout<<"pushed in path : "<<node<<endl;
+                    node = parent[node];
+                }
+                reverse(path.begin(),path.end());
+                ans.push_back()
+            }
+            for(Edge& edge:adjacencyList[node]){
                 
-    //             if(!visit[edge.vertex]){
-    //                 cout<<"now visiting "<<edge.vertex<<endl;
-    //                 visit[edge.vertex]=1;
-    //                 temp.push(Edge(edge.vertex,edge.cost,edge.eh));
-    //                 parent[edge.vertex] = node;
-    //             }
-    //         }
-    //         if(q.empty()){
-    //             if(temp.size()>width){
-    //             for(int i=0;i<width;i++){
-    //                 cout<<"adding now from temp : "<<temp.top().vertex<<endl;
-    //                 q.push(temp.top());   //adding only the first two nodes with least heuristic value to the queue to explore further
-    //                 temp.pop();
-    //             }
-    //             while(!temp.empty()) temp.pop();  //clearing out the temp array to store the nodes at next level
-    //             }
-    //             else{
-    //                 while(!temp.empty()){
-    //                 cout<<"adding now from temp : "<<temp.top().vertex<<endl;
-    //                 q.push(temp.top());
-    //                 temp.pop();
-    //             }
-    //             }
+                if(!visit[edge.vertex]){
+                    cout<<"now visiting "<<edge.vertex<<endl;
+                    visit[edge.vertex]=1;
+                    temp.push(Edge(edge.vertex,edge.cost,edge.eh));
+                    parent[edge.vertex] = node;
+                }
+            }
+            if(q.empty()){
+                if(temp.size()>width){
+                for(int i=0;i<width;i++){
+                    cout<<"adding now from temp : "<<temp.top().vertex<<endl;
+                    q.push(temp.top());   //adding only the first two nodes with least heuristic value to the queue to explore further
+                    temp.pop();
+                }
+                while(!temp.empty()) temp.pop();  //clearing out the temp array to store the nodes at next level
+                }
+                else{
+                    while(!temp.empty()){
+                    cout<<"adding now from temp : "<<temp.top().vertex<<endl;
+                    q.push(temp.top());
+                    temp.pop();
+                }
+                }
                 
                 
-    //         }
-    //     }
-    //     return ans;
+            }
+        }
+        return ans;
         
-    // }
+    }
     vector<int> beamSearch(int goal,int width){
         priority_queue<Edge, vector<Edge>, CompareEdges> q;
         vector<int> ans;
