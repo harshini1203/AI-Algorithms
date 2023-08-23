@@ -47,11 +47,11 @@ public:
         adjacencyList[v2].push_back(Edge(v1, cost,eh)); // For undirected graph, add an edge in both directions
     }
     vector<int> oracle(int goal){
-        
-        priority_queue<Edge, vector<Edge>, CompareEdges> q;
-        vector<pair<vector<int>,int>;
+        priority_queue<pair<int, Edge>,vector<pair<int, Edge>>, ComparePairs> q;
+        vector<pair<vector<int>,int>> ans;
         vector<int> parent(N, -1);
-       
+        int visit[N]={0};
+        visit[0]=1;
      
         q.push(Edge(0,0,0));
         cout<<q.top().vertex<<endl;
@@ -77,28 +77,17 @@ public:
                 if(!visit[edge.vertex]){
                     cout<<"now visiting "<<edge.vertex<<endl;
                     visit[edge.vertex]=1;
-                    temp.push(Edge(edge.vertex,edge.cost,edge.eh));
+                    temp.push(make_pair(cumulativeCost+cost,edge));
                     parent[edge.vertex] = node;
                 }
             }
             if(q.empty()){
-                if(temp.size()>width){
-                for(int i=0;i<width;i++){
+                 while(!temp.empty()){
                     cout<<"adding now from temp : "<<temp.top().vertex<<endl;
-                    q.push(temp.top());   //adding only the first two nodes with least heuristic value to the queue to explore further
+                    q.push(temp.top());   //level wise
                     temp.pop();
                 }
-                while(!temp.empty()) temp.pop();  //clearing out the temp array to store the nodes at next level
-                }
-                else{
-                    while(!temp.empty()){
-                    cout<<"adding now from temp : "<<temp.top().vertex<<endl;
-                    q.push(temp.top());
-                    temp.pop();
-                }
-                }
-                
-                
+            }
             }
         }
         return ans;
