@@ -46,15 +46,14 @@ public:
         adjacencyList[v1].push_back(Edge(v2, cost,eh)); // Pushing edge with destination vertex and cost to adjacency list of node v1
         adjacencyList[v2].push_back(Edge(v1, cost,eh)); // For undirected graph, add an edge in both directions
     }
-    vector<int> oracle(int goal){
+    vector<pair<vector<int>,int>> oracle(int goal){
         priority_queue<pair<int, Edge>,vector<pair<int, Edge>>, ComparePairs> q;
         vector<pair<vector<int>,int>> ans;
         vector<int> parent(N, -1);
         int visit[N]={0};
         visit[0]=1;
-     
-        q.push(Edge(0,0,0));
-        cout<<q.top().vertex<<endl;
+        q.push(make_pair(0,Edge(0,0,0)));
+        cout<<q.top().second.vertex<<endl;
         while(!q.empty()){
            priority_queue<pair<int, Edge>,vector<pair<int, Edge>>, ComparePairs> temp;
             int node=q.top().second.vertex;
@@ -62,37 +61,40 @@ public:
             int cumulativeCost=q.top().first;
             q.pop();
             
-             if (node == goal) {
-                vector<int> path;
-                while (node != -1) {
-                    path.push_back(node);
-                    cout<<"pushed in path : "<<node<<endl;
-                    node = parent[node];
-                }
-                reverse(path.begin(),path.end());
-                ans.push_back()
-            }
+             
             for(Edge& edge:adjacencyList[node]){
                 
-                if(!visit[edge.vertex]){
+                if(!visit[edge.vertex] || edge.vertex==goal){
                     cout<<"now visiting "<<edge.vertex<<endl;
                     visit[edge.vertex]=1;
                     temp.push(make_pair(cumulativeCost+cost,edge));
                     parent[edge.vertex] = node;
+                    
+                     if(edge.vertex==goal){
+                        vector<int> path;
+                        int a=edge.vertex;
+                        while (a != -1){
+                            path.push_back(a);
+                            a = parent[a];
+                        }
+                        reverse(path.begin(), path.end());
+                        ans.push_back(make_pair(path,cumulativeCost));
+                    }
                 }
             }
             if(q.empty()){
                  while(!temp.empty()){
-                    cout<<"adding now from temp : "<<temp.top().vertex<<endl;
+                    cout<<"adding now from temp : "<<temp.top().second.vertex<<endl;
                     q.push(temp.top());   //level wise
                     temp.pop();
                 }
             }
             }
-        }
-        return ans;
         
-    }
+        return ans;
+}
+        
+    
     vector<int> beamSearch(int goal,int width){
         priority_queue<Edge, vector<Edge>, CompareEdges> q;
         vector<int> ans;
