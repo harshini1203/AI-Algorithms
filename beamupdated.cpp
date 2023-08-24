@@ -3,6 +3,7 @@
 #include<queue>
 #include<algorithm>
 #include<climits>
+#include<utility>
 using namespace std;
 
 struct Edge {
@@ -29,7 +30,7 @@ struct ComparePairs {
 };
 
 struct comparator{
-    bool operator()(const pair<vector<int>& p1,const pair<vector<int>,int>& p2){
+    bool operator()(const pair<vector<int>,int>& p1,const pair<vector<int>,int>& p2){
         return p1.second<p2.second;
     }
 };
@@ -96,7 +97,7 @@ public:
                 }
             }
             }
-        sort(ans.begin(),ans.end(),comparator);
+        sort(ans.begin(),ans.end(),comparator());
         return ans;
 }
         
@@ -204,7 +205,7 @@ public:
                 cout<<num<<" ";
             }
             cout<<endl;
-            cout<<"Path cost ":
+            cout<<"Path cost :  "<<pair.second;
         }
     }
      void printAdjacencyList(){
@@ -227,7 +228,7 @@ public:
 int main() {
     int N, E, choice, goal,cost,width;
     vector<int> ans;
-    vector<vector<int>> answer;
+    vector<pair<vector<int>,int>> answer;
     cout << "Enter the number of nodes/vertices: ";
     cin >> N;
     cout << "Enter the number of edges: ";
@@ -260,10 +261,14 @@ int main() {
       case 2:
       ans=g.dfsOfGraph(goal);
       break;
+      
+      case 3:
+      answer=g.oracle(goal);
   }
     cout << "The traversal for your desired algorithm is: "<<endl;
  
-    g.printAnswerArray(ans); 
+    if(choice==3) g.printOracle(answer);
+    else g.printOracle(answer); 
 
     return 0;
 }
