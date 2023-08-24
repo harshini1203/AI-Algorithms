@@ -28,6 +28,12 @@ struct ComparePairs {
     }
 };
 
+struct comparator{
+    bool operator()(const pair<vector<int>& p1,const pair<vector<int>,int>& p2){
+        return p1.second<p2.second;
+    }
+};
+
 class Graph {
 
     int N,E;
@@ -90,7 +96,7 @@ public:
                 }
             }
             }
-        
+        sort(ans.begin(),ans.end(),comparator);
         return ans;
 }
         
@@ -189,6 +195,16 @@ public:
     void printAnswerArray(vector<int> ans){
         for(int i=0;i<ans.size();i++){
             cout<<ans[i]<<" ";
+        }
+    }
+    void printOracle(vector<pair<vector<int>,int>> ans){
+        for(const auto& pair:ans){
+            const vector<int>& vec=pair.first;
+            for(int num:vec){
+                cout<<num<<" ";
+            }
+            cout<<endl;
+            cout<<"Path cost ":
         }
     }
      void printAdjacencyList(){
