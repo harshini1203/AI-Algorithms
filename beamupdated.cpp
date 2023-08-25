@@ -56,9 +56,11 @@ public:
     vector<pair<vector<int>,int>> oracle(int goal){
         priority_queue<pair<int, Edge>,vector<pair<int, Edge>>, ComparePairs> q;
         vector<pair<vector<int>,int>> ans;
-        vector<int> parent(N, -1);
-        int visit[N]={0};
-        visit[0]=1;
+         vector<vector<int>> parent( 100 , vector<int> (100, 0));
+         int level=1;
+        // int visit[N]={0};
+        // visit[0]=1;
+        
         q.push(make_pair(0,Edge(0,0,0)));
         cout<<q.top().second.vertex<<endl;
         while(!q.empty()){
@@ -70,28 +72,33 @@ public:
             
              
             for(Edge& edge:adjacencyList[node]){
-                
-                if(!visit[edge.vertex] || edge.vertex==goal){
+                if(edge.vertex!=parent[level-1][node]){
                     cout<<"now visiting "<<edge.vertex<<endl;
-                    visit[edge.vertex]=1;
-                    temp.push(make_pair(cumulativeCost+cost,edge));
-                    parent[edge.vertex] = node;
+                    temp.push(make_pair(cumulativeCost+edge.cost,edge));
+                    cout<<"pushed : "<<cumulativeCost+edge.cost<<" "<<edge.vertex<<endl;
+                    parent[level][edge.vertex] = node;
+                    cout<<"Parent of "<<edge.vertex<<" is : "<<parent[level][edge.vertex];
                     
                      if(edge.vertex==goal){
                         vector<int> path;
                         int a=edge.vertex;
-                        while (a != -1){
+                        path.push_back(a);
+                        a=parent[level][a];
+                        while (a != 0){
                             path.push_back(a);
-                            a = parent[a];
+                            a = parent[level-1][a];
                         }
+                        path.push_back(0);
                         reverse(path.begin(), path.end());
-                        ans.push_back(make_pair(path,cumulativeCost));
+                        ans.push_back(make_pair(path,cumulativeCost+edge.cost));
                     }
                 }
+                
             }
             if(q.empty()){
+                level++;
                  while(!temp.empty()){
-                    cout<<"adding now from temp : "<<temp.top().second.vertex<<endl;
+                    cout<<"adding now from temp new level : "<<temp.top().second.vertex<<endl;
                     q.push(temp.top());   //level wise
                     temp.pop();
                 }
