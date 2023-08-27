@@ -22,31 +22,54 @@ class Graph{
     
      vector<vector<int>> bms(int goal) {
         vector<vector<int>> paths; // Vector to store all the paths to goal 
-        vector<bool> visited(N, false); 
-        queue<int> q; 
-        vector<int> parent(N, -1);
+        //vector<bool> visited(N, false); 
+        queue<int> q,temp; 
+        vector<vector<int>> parent( 10 , vector<int> (N, 0));
+        int level=1;
         q.push(0); 
-        visited[0] = true;
+        //visited[0] = true;
 
         while (!q.empty()) {
             int node = q.front();
+            cout<<"now exploring "<<node<<endl;
             q.pop();
+            int vis[N]={0};
             for (int neighbor : adjacencyList[node]) {
-                if (!visited[neighbor] || neighbor==goal) {
-                    visited[neighbor] = true;
-                    q.push(neighbor);
-                    parent[neighbor] = node; //setting parent of goal if found else just update parent of neighbor node
-                    
-                    if(neighbor==goal){
-                        vector<int> path;
-                        int a=neighbor;
-                        while (a != -1) {
+                cout<<"neigbour is "<<neighbor<<endl;
+                for(int i=1;i<level;i++){
+                    vis[parent[i][node]]=1;
+                }
+                    if(vis[neighbor]==0){
+                        temp.push(neighbor);
+                        cout<<"Pushed to temp : "<<neighbor<<endl;
+                        vis[neighbor]=1; //to avoid repetition of visited nodes and parent node
+                        parent[level][neighbor] = node; //update parent of neighbor node
+                        if(neighbor==goal){
+                            vector<int> path;
+                            int a=neighbor;
                             path.push_back(a);
-                            a = parent[a];
+                            cout<<"Pushed into path "<<a<<endl;
+                            int l=level;
+                            while (l != 0) {
+                                a = parent[l][a];
+                                path.push_back(a);
+                                cout<<"Pushed into path "<<a<<endl;
+                                l=l-1;
+                            }
+                            //path.push_back(0);
+                            reverse(path.begin(), path.end());
+                            paths.push_back(path);
                         }
-                        reverse(path.begin(), path.end());
-                        paths.push_back(path);
                     }
+                
+            }
+            cout<<"level is : "<<level<<endl;
+            if(q.empty()){
+                level++;
+                while(!temp.empty()){
+                    q.push(temp.front());
+                    cout<<"pushed to queue is : "<<temp.front()<<endl;
+                    temp.pop();
                 }
             }
         }
@@ -183,4 +206,3 @@ int main() {
     }
     return 0;
 }
-
