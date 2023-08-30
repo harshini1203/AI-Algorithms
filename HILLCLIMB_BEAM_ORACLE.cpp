@@ -22,18 +22,31 @@ struct CompareEdges {
         return a.eh>b.eh; // Min-heap 
     }
 };
-struct ComparePairs {
+struct ComparePairs {  //oracle
     bool operator()(const pair<int, Edge>& p1, const pair<int, Edge>& p2) const {
         // Compare based on the cumulative cost in the pair
         return p1.first > p2.first; //Min-heap
     }
 };
-struct Compare {
-    bool operator()(const pair<int, Edge>& p1, const pair<int, Edge>& p2) const {
+struct ComparePairsLevel {   //branch and boundary
+    bool operator()(const pair<pair<int,Edge>,int>& p1, const pair<pair<int,Edge>,int>& p2) const {
         // Compare based on the cumulative cost in the pair
-        return p1.first > p2.first; //Min-heap
+        return p1.first.first > p2.first.first; //Min-heap
     }
 };
+struct ComparePairsLevelEH {   //branch and boundary with EH
+    bool operator()(const pair<pair<int,Edge>,int>& p1, const pair<pair<int,Edge>,int>& p2) const {
+        // Compare based on the cumulative cost in the pair
+        return p1.first.first+p1.first.second.eh > p2.first.first+p2.first.second.eh; //Min-heap
+    }
+};
+struct ComparePairsEH{  //oracle with eh
+    bool operator()(const pair<int, Edge>& p1, const pair<int, Edge>& p2) const {
+        // Compare based on the cumulative cost in the pair
+        return p1.first+p1.second.eh > p2.first+p1.second.eh; //Min-heap
+    }
+};
+
 struct comparator{
     bool operator()(const pair<vector<int>,int>& p1,const pair<vector<int>,int>& p2){
         return p1.second<p2.second;
@@ -58,69 +71,233 @@ public:
         adjacencyList[v1].push_back(Edge(v2, cost,eh)); // Pushing edge with destination vertex and cost to adjacency list of node v1
         adjacencyList[v2].push_back(Edge(v1, cost,eh)); // For undirected graph, add an edge in both directions
     }
-    vector<pair<vector<int>,int>> oracle(int goal){
-        priority_queue<pair<int, Edge>,vector<pair<int, Edge>>, ComparePairs> q;
-        queue<pair<int, Edge>> temp;
+    
+    vector<pair<vector<int>,int>> bb(int goal){
+        priority_queue <pair<pair<int,Edge>,int>,vector<pair<pair<int,Edge>,int>>, ComparePairsLevel> q;
+        queue<pair<int,Edge>> temp;
         vector<pair<vector<int>,int>> ans;
          vector<vector<int>> parent( 100 , vector<int> (100, 0));
-         int level=1;
         // int visit[N]={0};
         // visit[0]=1;
-        q.push(make_pair(0,Edge(0,0,0)));
-        cout<<q.top().second.vertex<<endl;
+         q.push(make_pair(make_pair(0,Edge(0,0,0)),0));
+        //cout<<q.top().first.second.vertex<<endl;
         while(!q.empty()){
-            int node=q.top().second.vertex;
-            int cost=q.top().second.cost;
-            int cumulativeCost=q.top().first;
+            int node=q.top().first.second.vertex;
+            int cost=q.top().first.second.cost;
+            int cumulativeCost=q.top().first.first;
+            int level=q.top().second;
             q.pop();
-            
+            //cout<<"The level this node is on : "<<level<<endl;
             int vis[N]={0};
             for(Edge& edge:adjacencyList[node]){
-                 for(int i=1;i<level;i++){
+                 for(int i=1;i<=level;i++){
                     vis[parent[i][node]]=1;
                 }
                 if(vis[edge.vertex]==0){
-                    cout<<"now visiting "<<edge.vertex<<endl;
+                  //  cout<<"now exploring "<<edge.vertex<<endl;
                     vis[edge.vertex]=1;
-                    temp.push(make_pair(cumulativeCost+edge.cost,edge));
-                    cout<<"pushed : "<<cumulativeCost+edge.cost<<" "<<edge.vertex<<endl;
-                    parent[level][edge.vertex] = node;
-                    cout<<"Parent of "<<edge.vertex<<" is : "<<parent[level][edge.vertex]<<endl;
+                    q.push(make_pair(make_pair(cumulativeCost+edge.cost,edge),level+1));
+                  //  cout<<"pushed in queue : "<<cumulativeCost+edge.cost<<" "<<edge.vertex<<endl;
+                    parent[level+1][edge.vertex] = node;
+                  //  cout<<"Parent of "<<edge.vertex<<" is : "<<parent[level+1][edge.vertex]<<endl;
                     
+                    //cout<<endl;
                     if(edge.vertex==goal){
                         vector<int> path;
-                        int l=level;
+                        int l=level+1;
+                        //cout<<"goal is on level : "<<level<<endl;
                         int a=edge.vertex;
-                        path.push_back(a);
-
                         while (l != 0){
                             path.push_back(a);
+                           // cout<<"in path : "<<a<<endl;
                             a = parent[l][a];
                             l=l-1;
                         }
-                        //path.push_back(0);
+                        path.push_back(0);
                         reverse(path.begin(), path.end());
                         ans.push_back(make_pair(path,cumulativeCost+edge.cost));
+                        return ans;
                     }
                 }
                 
             }
           
-            if(q.empty()){
-                cout<<"Exploration of "<<level<<" level done "<<endl;
-                level++;
-                 while(!temp.empty()){
-                     cout<<"TEMP SIZE : "<<temp.size()<<endl;
-                    cout<<"adding now from temp for new level : "<<temp.front().second.vertex<<endl;
-                    q.push(temp.front());   //level wise
-                    temp.pop();
-                }
+            
             }
-            }
-        sort(ans.begin(),ans.end(),comparator());
         return ans;
 }
-        
+         vector<pair<vector<int>,int>> bbELEH(int goal){
+        priority_queue <pair<pair<int,Edge>,int>,vector<pair<pair<int,Edge>,int>>, ComparePairsLevelEH> q;
+        queue<pair<int,Edge>> temp;
+        vector<pair<vector<int>,int>> ans;
+         vector<vector<int>> parent( 100 , vector<int> (100, 0));
+        // int visit[N]={0};
+        // visit[0]=1;
+        int EL[N]={0};
+        EL[0]=1;
+         q.push(make_pair(make_pair(0,Edge(0,0,0)),0));
+        //cout<<q.top().first.second.vertex<<endl;
+        while(!q.empty()){
+
+            int node=q.top().first.second.vertex;
+            int cost=q.top().first.second.cost;
+            int cumulativeCost=q.top().first.first;
+            int level=q.top().second;
+            q.pop();
+            cout<<"Now exploring : "<<node<<endl;
+            //cout<<"The level this node is on : "<<level<<endl;
+            //int vis[N]={0};
+            for(Edge& edge:adjacencyList[node]){
+                //  for(int i=1;i<=level;i++){
+                //     vis[parent[i][node]]=1;
+                // }
+                if(EL[edge.vertex]==0){
+                    //cout<<"now exploring "<<edge.vertex<<endl;
+                    EL[edge.vertex]=1;
+                    q.push(make_pair(make_pair(cumulativeCost+edge.cost,edge),level+1));
+                  //  cout<<"pushed in queue : "<<cumulativeCost+edge.cost<<" "<<edge.vertex<<endl;
+                    parent[level+1][edge.vertex] = node;
+                  //  cout<<"Parent of "<<edge.vertex<<" is : "<<parent[level+1][edge.vertex]<<endl;
+                    
+                    //cout<<endl;
+                    if(edge.vertex==goal){
+                        vector<int> path;
+                        int l=level+1;
+                        //cout<<"goal is on level : "<<level<<endl;
+                        int a=edge.vertex;
+                        while (l != 0){
+                            path.push_back(a);
+                           // cout<<"in path : "<<a<<endl;
+                            a = parent[l][a];
+                            l=l-1;
+                        }
+                        path.push_back(0);
+                        reverse(path.begin(), path.end());
+                        ans.push_back(make_pair(path,cumulativeCost+edge.cost));
+                        return ans;
+                    }
+                }
+                
+            }
+          
+            
+            }
+        return ans;
+        }
+        vector<pair<vector<int>,int>> bbEL(int goal){
+        priority_queue <pair<pair<int,Edge>,int>,vector<pair<pair<int,Edge>,int>>, ComparePairsLevelEH> q;
+        queue<pair<int,Edge>> temp;
+        vector<pair<vector<int>,int>> ans;
+         vector<vector<int>> parent( 100 , vector<int> (100, 0));
+        // int visit[N]={0};
+        // visit[0]=1;
+        int EL[N]={0};
+        EL[0]=1;
+         q.push(make_pair(make_pair(0,Edge(0,0,0)),0));
+        //cout<<q.top().first.second.vertex<<endl;
+        while(!q.empty()){
+
+            int node=q.top().first.second.vertex;
+            int cost=q.top().first.second.cost;
+            int cumulativeCost=q.top().first.first;
+            int level=q.top().second;
+            q.pop();
+            //cout<<"Now exploring : "<<node<<endl;
+            //cout<<"The level this node is on : "<<level<<endl;
+            //int vis[N]={0};
+            for(Edge& edge:adjacencyList[node]){
+                //  for(int i=1;i<=level;i++){
+                //     vis[parent[i][node]]=1;
+                // }
+                if(EL[edge.vertex]==0){
+                    //cout<<"now exploring "<<edge.vertex<<endl;
+                    EL[edge.vertex]=1;
+                    q.push(make_pair(make_pair(cumulativeCost+edge.cost,edge),level+1));
+                  //  cout<<"pushed in queue : "<<cumulativeCost+edge.cost<<" "<<edge.vertex<<endl;
+                    parent[level+1][edge.vertex] = node;
+                  //  cout<<"Parent of "<<edge.vertex<<" is : "<<parent[level+1][edge.vertex]<<endl;
+                    
+                    //cout<<endl;
+                    if(edge.vertex==goal){
+                        vector<int> path;
+                        int l=level+1;
+                        //cout<<"goal is on level : "<<level<<endl;
+                        int a=edge.vertex;
+                        while (l != 0){
+                            path.push_back(a);
+                           // cout<<"in path : "<<a<<endl;
+                            a = parent[l][a];
+                            l=l-1;
+                        }
+                        path.push_back(0);
+                        reverse(path.begin(), path.end());
+                        ans.push_back(make_pair(path,cumulativeCost+edge.cost));
+                        return ans;
+                    }
+                }
+                
+            }
+          
+            
+            }
+        return ans;
+        }
+
+     vector<pair<vector<int>,int>> bbEH(int goal){
+        priority_queue <pair<pair<int,Edge>,int>,vector<pair<pair<int,Edge>,int>>, ComparePairsLevelEH> q;
+        queue<pair<int,Edge>> temp;
+        vector<pair<vector<int>,int>> ans;
+         vector<vector<int>> parent( 100 , vector<int> (100, 0));
+        // int visit[N]={0};
+        // visit[0]=1;
+         q.push(make_pair(make_pair(0,Edge(0,0,0)),0));
+        //cout<<q.top().first.second.vertex<<endl;
+        while(!q.empty()){
+            int node=q.top().first.second.vertex;
+            int cost=q.top().first.second.cost;
+            int cumulativeCost=q.top().first.first;
+            int level=q.top().second;
+            q.pop();
+            //cout<<"The level this node is on : "<<level<<endl;
+            int vis[N]={0};
+            for(Edge& edge:adjacencyList[node]){
+                 for(int i=1;i<=level;i++){
+                    vis[parent[i][node]]=1;
+                }
+                if(vis[edge.vertex]==0){
+                  //  cout<<"now exploring "<<edge.vertex<<endl;
+                    vis[edge.vertex]=1;
+                    q.push(make_pair(make_pair(cumulativeCost+edge.cost,edge),level+1));
+                  //  cout<<"pushed in queue : "<<cumulativeCost+edge.cost<<" "<<edge.vertex<<endl;
+                    parent[level+1][edge.vertex] = node;
+                  //  cout<<"Parent of "<<edge.vertex<<" is : "<<parent[level+1][edge.vertex]<<endl;
+                    
+                    //cout<<endl;
+                    if(edge.vertex==goal){
+                        vector<int> path;
+                        int l=level+1;
+                        //cout<<"goal is on level : "<<level<<endl;
+                        int a=edge.vertex;
+                        while (l != 0){
+                            path.push_back(a);
+                           // cout<<"in path : "<<a<<endl;
+                            a = parent[l][a];
+                            l=l-1;
+                        }
+                        path.push_back(0);
+                        reverse(path.begin(), path.end());
+                        ans.push_back(make_pair(path,cumulativeCost+edge.cost));
+                        return ans;
+                    }
+                }
+                
+            }
+          
+            
+            }
+        return ans;
+}
+         
     
     vector<int> beamSearch(int goal,int width){
         priority_queue<Edge, vector<Edge>, CompareEdges> q;
@@ -130,7 +307,7 @@ public:
         visit[0]=1;
      
         q.push(Edge(0,0,0));
-        cout<<q.top().vertex<<endl;
+       // cout<<q.top().vertex<<endl;
         while(!q.empty()){
             priority_queue<Edge,vector<Edge>,CompareEdges> temp;
             int node=q.top().vertex;
@@ -140,12 +317,11 @@ public:
                 vector<int> path;
                 while (node != -1) {
                     path.push_back(node);
-                    cout<<"pushed in path : "<<node<<endl;
-
+                    //cout<<"pushed in path : "<<node<<endl;
                     node = parent[node];
                 }
                 reverse(path.begin(), path.end());
-                cout<<"being returned "<<endl;
+               // cout<<"being returned "<<endl;
                 return path;
             }
             for(Edge& edge:adjacencyList[node]){
@@ -180,6 +356,130 @@ public:
         }
         return ans;
     }
+    vector<pair<vector<int>,int>> oracleEH(int goal){
+        priority_queue<pair<int, Edge>,vector<pair<int, Edge>>, ComparePairs> q;
+        queue<pair<int, Edge>> temp;
+        vector<pair<vector<int>,int>> ans;
+         vector<vector<int>> parent( 100 , vector<int> (100, 0));
+         int level=1;
+        // int visit[N]={0};
+        // visit[0]=1;
+        q.push(make_pair(0,Edge(0,0,0)));
+        cout<<q.top().second.vertex<<endl;
+        while(!q.empty()){
+            int node=q.top().second.vertex;
+            int cost=q.top().second.cost;
+            int cumulativeCost=q.top().first;
+            q.pop();
+            
+            int vis[N]={0};
+            for(Edge& edge:adjacencyList[node]){
+                 for(int i=1;i<level;i++){
+                    vis[parent[i][node]]=1;
+                }
+                if(vis[edge.vertex]==0){
+                    cout<<"now visiting "<<edge.vertex<<endl;
+                    vis[edge.vertex]=1;
+                    temp.push(make_pair(cumulativeCost+edge.cost,edge));
+                    cout<<"pushed : "<<cumulativeCost+edge.cost<<" "<<edge.vertex<<endl;
+                    parent[level][edge.vertex] = node;
+                    cout<<"Parent of "<<edge.vertex<<" is : "<<parent[level][edge.vertex]<<endl;
+                    
+                    if(edge.vertex==goal){
+                        vector<int> path;
+                        int l=level;
+                        int a=edge.vertex;
+    
+                        while (l != 0){
+                            path.push_back(a);
+                            a = parent[l][a];
+                            l=l-1;
+                        }
+                        path.push_back(0);
+                        reverse(path.begin(), path.end());
+                        ans.push_back(make_pair(path,cumulativeCost+edge.cost));
+                    }
+                }
+                
+            }
+          
+            if(q.empty()){
+                cout<<"Exploration of "<<level<<" level done "<<endl;
+                level++;
+                 while(!temp.empty()){
+                     cout<<"TEMP SIZE : "<<temp.size()<<endl;
+                    cout<<"adding now from temp for new level : "<<temp.front().second.vertex<<endl;
+                    q.push(temp.front());   //level wise
+                    temp.pop();
+                }
+            }
+            }
+        sort(ans.begin(),ans.end(),comparator());
+        return ans;
+}
+     
+       vector<pair<vector<int>,int>> oracle(int goal){
+        priority_queue<pair<int, Edge>,vector<pair<int, Edge>>, ComparePairs> q;
+        queue<pair<int, Edge>> temp;
+        vector<pair<vector<int>,int>> ans;
+         vector<vector<int>> parent( 100 , vector<int> (100, 0));
+         int level=1;
+        // int visit[N]={0};
+        // visit[0]=1;
+        q.push(make_pair(0,Edge(0,0,0)));
+        cout<<q.top().second.vertex<<endl;
+        while(!q.empty()){
+            int node=q.top().second.vertex;
+            int cost=q.top().second.cost;
+            int cumulativeCost=q.top().first;
+            q.pop();
+            
+            int vis[N]={0};
+            for(Edge& edge:adjacencyList[node]){
+                 for(int i=1;i<level;i++){
+                    vis[parent[i][node]]=1;
+                }
+                if(vis[edge.vertex]==0){
+                    cout<<"now visiting "<<edge.vertex<<endl;
+                    vis[edge.vertex]=1;
+                    temp.push(make_pair(cumulativeCost+edge.cost,edge));
+                    cout<<"pushed : "<<cumulativeCost+edge.cost<<" "<<edge.vertex<<endl;
+                    parent[level][edge.vertex] = node;
+                    cout<<"Parent of "<<edge.vertex<<" is : "<<parent[level][edge.vertex]<<endl;
+                    
+                    if(edge.vertex==goal){
+                        vector<int> path;
+                        int l=level;
+                        int a=edge.vertex;
+        
+                        while (l != 0){
+                            path.push_back(a);
+                            a = parent[l][a];
+                            l=l-1;
+                        }
+                        path.push_back(0);
+                        reverse(path.begin(), path.end());
+                        ans.push_back(make_pair(path,cumulativeCost+edge.cost));
+                    }
+                }
+                
+            }
+          
+            if(q.empty()){
+                cout<<"Exploration of "<<level<<" level done "<<endl;
+                level++;
+                 while(!temp.empty()){
+                     cout<<"TEMP SIZE : "<<temp.size()<<endl;
+                    cout<<"adding now from temp for new level : "<<temp.front().second.vertex<<endl;
+                    q.push(temp.front());   //level wise
+                    temp.pop();
+                }
+            }
+            }
+        sort(ans.begin(),ans.end(),comparator());
+        return ans;
+}
+     
 
     void hillclimbing(int node,int visited[],vector<int> &answer,int goal){
       visited[node]=1;
@@ -270,28 +570,60 @@ int main() {
     cout << endl;
     
   cout << "The following are the algorithms that can be performed on your graph: " << endl;
-    cout << endl << "1. Beam Search" << endl << "2. Hill Climbing" << endl<<"3. Oracle search"<<endl;
+  cout << endl << "1. Beam Search" << endl << "2. Hill Climbing" << endl<<"3. Oracle search"<<endl<<"4. Branch and Boundary"<<endl<<"5. Oracle search with estimated heuristics and cost"<<endl<<"6. Branch and boundary with estimated heuristics and cost"<<endl<<"7. Branch and boundary with cost and extended list"<<endl<<"8. Branch and boundary with cost,estimated heuristics and extended list"<<endl;
     
+    
+cout<<endl<<endl;
   cout<<"Enter your choice of algorithm : ";
   cin>>choice;
+  cout<<endl<<endl;
+  cout << "The traversal for your desired algorithm is: "<<endl;
   switch(choice){
       case 1:
         cout<<"Enter beam width : ";
         cin>>width;
         ans=g.beamSearch(goal,width);
+        g.printAnswerArray(ans);
       break;
       
       case 2:
       ans=g.dfsOfGraph(goal);
+      g.printAnswerArray(ans);
       break;
       
       case 3:
       answer=g.oracle(goal);
+      g.printOracle(answer);
+      break;
+      
+      case 4:
+      answer=g.bb(goal);
+      g.printOracle(answer);
+      break;
+      
+      case 5:
+      answer=g.oracleEH(goal);
+      g.printOracle(answer);
+      break;
+      
+      case 6:
+      answer=g.bbEH(goal);
+      g.printOracle(answer);
+      break;
+      
+      case 7:
+      answer=g.bbEL(goal);
+      g.printOracle(answer);
+      break;
+      
+      case 8:
+      answer=g.bbELEH(goal);
+      g.printOracle(answer);
+      break;
   }
-    cout << "The traversal for your desired algorithm is: "<<endl;
+    
  
-    if(choice==3) g.printOracle(answer);
-    else g.printOracle(answer); 
+   
 
     return 0;
 }
