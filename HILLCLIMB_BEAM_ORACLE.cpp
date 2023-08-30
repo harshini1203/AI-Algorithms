@@ -144,7 +144,7 @@ public:
             int cumulativeCost=q.top().first.first;
             int level=q.top().second;
             q.pop();
-            cout<<"Now exploring : "<<node<<endl;
+            //cout<<"Now exploring : "<<node<<endl;
             //cout<<"The level this node is on : "<<level<<endl;
             //int vis[N]={0};
             for(Edge& edge:adjacencyList[node]){
@@ -300,41 +300,60 @@ public:
          
     
     vector<int> beamSearch(int goal,int width){
+        vector<vector<int>> parent( 100 , vector<int> (100, 0));
+        int level=1;
         priority_queue<Edge, vector<Edge>, CompareEdges> q;
         vector<int> ans;
-        vector<int> parent(N, -1);
-        int visit[N]={0};
-        visit[0]=1;
-     
         q.push(Edge(0,0,0));
-       // cout<<q.top().vertex<<endl;
+        cout<<q.top().vertex<<endl;
         while(!q.empty()){
             priority_queue<Edge,vector<Edge>,CompareEdges> temp;
             int node=q.top().vertex;
-            q.pop();
-            
-             if (node == goal) {
-                vector<int> path;
-                while (node != -1) {
-                    path.push_back(node);
-                    //cout<<"pushed in path : "<<node<<endl;
-                    node = parent[node];
-                }
-                reverse(path.begin(), path.end());
-               // cout<<"being returned "<<endl;
-                return path;
-            }
+            q.pop(); 
+            //  if (node == goal) {
+            //     vector<int> path;
+            //     while (node != -1) {
+            //         path.push_back(node);
+            //         cout<<"pushed in path : "<<node<<endl;
+
+            //         node = parent[node];
+            //     }
+            //     reverse(path.begin(), path.end());
+            //     cout<<"being returned "<<endl;
+            //     return path;
+            // }
+            int vis[N]={0};
             for(Edge& edge:adjacencyList[node]){
-                
-                if(!visit[edge.vertex]){
-                    cout<<"now visiting "<<edge.vertex<<endl;
-                    if(edge.vertex!=goal) visit[edge.vertex]=1;
-                    temp.push(Edge(edge.vertex,edge.cost,edge.eh));
-                    parent[edge.vertex] = node;
-                    cout<<"parent of "<<edge.vertex<<" is"<<node<<endl;
+                 for(int i=1;i<level;i++){
+                    vis[parent[i][node]]=1;
                 }
+                if(!vis[edge.vertex]){
+                    vis[edge.vertex]=1;
+                    cout<<"now visiting "<<edge.vertex<<endl;
+
+                    temp.push(Edge(edge.vertex,edge.cost,edge.eh));
+                    parent[level][edge.vertex] = node;
+                    cout<<"parent of "<<edge.vertex<<" is "<<node<<endl;
+                    
+                     if(edge.vertex==goal){
+                        vector<int> path;
+                        int l=level;
+                        int a=edge.vertex;
+        
+                        while (l != 0){
+                            path.push_back(a);
+                            a = parent[l][a];
+                            l=l-1;
+                        }
+                        path.push_back(0);
+                        reverse(path.begin(), path.end());
+                        return path;
+                }
+            }
             }
             if(q.empty()){
+                level++;
+                cout<<"level now : "<<level<<endl;
                 if(temp.size()>width){
                 for(int i=0;i<width;i++){
                     cout<<"adding now from temp : "<<temp.top().vertex<<endl;
@@ -353,8 +372,10 @@ public:
                 
                 
             }
-        }
-        return ans;
+        
+        
+    }
+    return ans;
     }
     vector<pair<vector<int>,int>> oracleEH(int goal){
         priority_queue<pair<int, Edge>,vector<pair<int, Edge>>, ComparePairs> q;
